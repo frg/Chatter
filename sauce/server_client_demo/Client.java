@@ -1,4 +1,4 @@
-package sauce;
+package server_client_demo;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,16 +11,7 @@ public class Client {
 	public static void main(String args[]){
 		Client client = new Client();
 		
-		StopWatch timer = new StopWatch();
-		timer.start();
-		while(true) {
-			// do every 2 seconds
-			if(timer.getElapsedTimeSecs() == 2) {
-				client.start();
-				timer.start();
-			}
-		}
-		
+		client.start();
 	}
 	
 	public void start(){

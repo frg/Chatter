@@ -1,4 +1,4 @@
-package sauce;
+package server_client_demo;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,9 +17,6 @@ public class Server {
 	}
 
 	public void startServing(){
-		StopWatch timer = new StopWatch();
-		timer.start();
-		
 		try {
 			ServerSocket serverSock = new ServerSocket(5359);
 			
@@ -27,10 +24,9 @@ public class Server {
 				Socket sock = serverSock.accept();
 				
 				PrintWriter writer = new PrintWriter(sock.getOutputStream());
-				// Write running time
-				writer.println(broadcast + " " + timer.getElapsedTime() + "ms");
+				writer.println(broadcast);
 				writer.close();
-				System.out.println(timer.getElapsedTime() + "ms");
+				System.out.println(broadcast);
 			}
 		} catch(IOException ioException) {
 			ioException.printStackTrace();

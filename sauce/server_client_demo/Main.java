@@ -1,4 +1,4 @@
-package sauce;
+package server_client_demo;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
