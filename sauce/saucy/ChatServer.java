@@ -3,8 +3,10 @@ package saucy;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -12,6 +14,14 @@ public class ChatServer {
 	ArrayList clientOutputStreams;
 	
 	public static void main(String args[]) {
+		// Find server ip
+		try {
+			InetAddress ipAddress = InetAddress.getLocalHost();
+			System.out.println(ipAddress.getHostAddress());
+		} catch (UnknownHostException uhEx) {
+			uhEx.printStackTrace();
+		}
+		
 		new ChatServer().go();
 	}
 	
@@ -19,7 +29,7 @@ public class ChatServer {
 		clientOutputStreams = new ArrayList();
 		
 		try {
-			ServerSocket serverSock = new ServerSocket(5000);
+			ServerSocket serverSock = new ServerSocket(5100);
 			
 			while(true) {
 				Socket clientSocket = serverSock.accept();
