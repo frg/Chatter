@@ -6,17 +6,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.TextEvent;
-import java.awt.event.TextListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -25,8 +19,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 public class ChatClient {
 	JScrollPane qScroller;
@@ -65,6 +57,8 @@ public class ChatClient {
 		
 		outgoing = new JTextField(20);
 		outgoing.setEnabled(false);
+		outgoing.addFocusListener(new outgoingListener());
+		outgoing.addActionListener(new outgoingListener());
 		
 		sendBtn = new JButton("Send");
 		sendBtn.addActionListener(new SendButtonListener());
@@ -82,7 +76,7 @@ public class ChatClient {
 	
 	public void setUpNetworking(String serverIp) {
 		try {
-			sock = new Socket(serverIp, 5100);
+			sock = new Socket(serverIp, Values.port);
 			
 			InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
 			reader = new BufferedReader(streamReader);
@@ -104,18 +98,10 @@ public class ChatClient {
 	
 	// Instructions to field format
 	public class ipFieldListener implements FocusListener, ActionListener {
-		// Check if enter is pressed
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			incoming.append("Connecting..\n");
-			// TODO Bug: appended text does not appear before trying to connect
-			
-			// Try establish networking
-			setUpNetworking(ipField.getText());
-		}
+		FocusEvent fE;
 		
 		@Override
-        public void focusGained(FocusEvent e) {
+        public void focusGained(FocusEvent fE) {			
 			if (ipField.getText().equals("Server ip..")) {
 				ipField.setText("");
 				ipField.setForeground(new Color(0, 0, 0));
@@ -123,28 +109,53 @@ public class ChatClient {
         }
 
         @Override
-        public void focusLost(FocusEvent e) {
+        public void focusLost(FocusEvent fE) {
         	if (ipField.getText().isEmpty()) {
 				ipField.setText("Server ip..");
 				ipField.setForeground(new Color(100, 100, 100));
 			}
         }
+        
+        // Check if enter is pressed
+ 		@Override
+ 		public void actionPerformed(ActionEvent aE) {
+ 			// If focus gained (value: 1004 is assigned when focus is gained)
+ 			if (fE.FOCUS_GAINED == 1004) {
+ 				incoming.append("Connecting..\n");
+ 	 			// TODO Bug: appended text does not appear before trying to connect
+ 	 			
+ 	 			// Try establish networking
+ 	 			setUpNetworking(ipField.getText());
+ 	 			
+ 	 			incoming.append("Connected! (ip: " + ipField.getText() + ")\n\n");
+ 			}
+ 		}
+	}
+	
+	public class outgoingListener implements FocusListener, ActionListener {
+		FocusEvent fE;
+
+		@Override
+		public void focusGained(FocusEvent e) {
+		}
+
+		@Override
+		public void focusLost(FocusEvent e) {	
+		}
+		
+		// Check if enter is pressed
+ 		@Override
+ 		public void actionPerformed(ActionEvent aE) {
+ 			// If focus gained (value: 1004 is assigned when focus is gained)
+ 			if (fE.FOCUS_GAINED == 1004) {
+ 				sendMessage();
+ 			}
+ 		}
 	}
 	
 	public class SendButtonListener implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
-			// If field not empty do
-			if (outgoing.getText() != "") {
-				try {
-					writer.println(outgoing.getText());
-					writer.flush();
-				} catch(Exception ex) {
-					ex.printStackTrace();
-				}
-				
-				outgoing.setText("");
-				outgoing.requestFocus();
-			}
+			sendMessage();
 		}
 
 	}
@@ -161,6 +172,21 @@ public class ChatClient {
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
+		}
+	}
+	
+	public void sendMessage() {
+		// If field not empty do
+		if (outgoing.getText() != "") {
+			try {
+				writer.println(outgoing.getText());
+				writer.flush();
+			} catch(Exception ex) {
+				ex.printStackTrace();
+			}
+			
+			outgoing.setText("");
+			outgoing.requestFocus();
 		}
 	}
 }

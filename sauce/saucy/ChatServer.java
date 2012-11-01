@@ -17,7 +17,7 @@ public class ChatServer {
 		// Find server ip
 		try {
 			InetAddress ipAddress = InetAddress.getLocalHost();
-			System.out.println(ipAddress.getHostAddress());
+			System.out.println(ipAddress);
 		} catch (UnknownHostException uhEx) {
 			uhEx.printStackTrace();
 		}
@@ -29,7 +29,7 @@ public class ChatServer {
 		clientOutputStreams = new ArrayList();
 		
 		try {
-			ServerSocket serverSock = new ServerSocket(5100);
+			ServerSocket serverSock = new ServerSocket(Values.port);
 			
 			while(true) {
 				Socket clientSocket = serverSock.accept();
@@ -58,14 +58,15 @@ public class ChatServer {
 				ex.printStackTrace();
 			}
 		}
-		
+	
 		public void run() {
 			String message;
 			
 			try {
 				while((message = reader.readLine()) != null) {
 					System.out.println("read: " + message);
-					tellEveryone(message);
+					tellEveryone(sock.getInetAddress() + ": " + message);
+					System.out.println(sock.getInetAddress());
 				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
