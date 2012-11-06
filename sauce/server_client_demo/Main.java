@@ -2,9 +2,14 @@ package server_client_demo;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Calendar;
+import java.util.Date;
 
 public class Main {
 	public static void main(String args[]){
+		Date d = new Date();
+		System.out.println(Calendar.getInstance().getTime());
+		
 		try {
 		    InetAddress addr = InetAddress.getLocalHost();
 

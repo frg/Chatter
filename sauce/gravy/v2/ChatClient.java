@@ -1,4 +1,4 @@
-package saucy;
+package gravy.v2;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -7,8 +7,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
@@ -26,9 +30,14 @@ public class ChatClient {
 	JTextArea incoming;
 	JTextField outgoing;
 	JTextField ipField;
-	BufferedReader reader;
-	PrintWriter writer;
+	
 	Socket sock;
+	OutputStream sockOut;
+	Message message;
+	ObjectOutputStream clientOut;
+	ObjectInputStream clientIn;
+	ByteArrayOutputStream baos;
+	
 	
 	public static void main(String args[]){
 		ChatClient client = new ChatClient();
@@ -36,7 +45,7 @@ public class ChatClient {
 	}
 
 	private void go() {
-		JFrame frame = new JFrame("Chatter biatches!");
+		JFrame frame = new JFrame("Chatter!");
 		JPanel mainPnl = new JPanel();
 		frame.setResizable(false);
 		
@@ -75,12 +84,27 @@ public class ChatClient {
 	}
 	
 	public void setUpNetworking(String serverIp) {
+		incoming.append("Connecting..\n");
+		
 		try {
 			sock = new Socket(serverIp, Values.port);
+			// New implementation start
+//			clientOut = new ObjectOutputStream(sock.getOutputStream());
+//			clientIn = new ObjectInputStream(sock.getInputStream());
+//			
+//			// Start listening thread
+//			Thread readerThread = new Thread(new IncomingReader());
+//			readerThread.start();
+//			
+//			clientOut.close();
+//			clientIn.close();
+			// New implementation end
 			
-			InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
-			reader = new BufferedReader(streamReader);
-			writer = new PrintWriter(sock.getOutputStream());
+			baos = new ByteArrayOutputStream();
+			clientOut = new ObjectOutputStream(baos);
+			
+			// Output
+			sockOut = sock.getOutputStream();
 			System.out.println("Networking established");
 			
 			// Start listening thread
@@ -90,6 +114,8 @@ public class ChatClient {
 			ipField.setEditable(false);
 			outgoing.setEnabled(true);
 			sendBtn.setEnabled(true);
+			
+			incoming.append("Connected! (ip: " + ipField.getText() + ")\n\n");
 		} catch(IOException ioEx) {
 			ioEx.printStackTrace();
 			incoming.append("=== Could not establish network using (ip: " + ipField.getText() + ") ===\n");
@@ -121,13 +147,8 @@ public class ChatClient {
  		public void actionPerformed(ActionEvent aE) {
  			// If focus gained (value: 1004 is assigned when focus is gained)
  			if (fE.FOCUS_GAINED == 1004) {
- 				incoming.append("Connecting..\n");
- 	 			// TODO Bug: appended text does not appear before trying to connect
- 	 			
  	 			// Try establish networking
- 	 			setUpNetworking(ipField.getText());
- 	 			
- 	 			incoming.append("Connected! (ip: " + ipField.getText() + ")\n\n");
+ 	 			setUpNetworking(ipField.getText().trim());
  			}
  		}
 	}
@@ -148,39 +169,48 @@ public class ChatClient {
  		public void actionPerformed(ActionEvent aE) {
  			// If focus gained (value: 1004 is assigned when focus is gained)
  			if (fE.FOCUS_GAINED == 1004) {
- 				sendMessage();
+ 				sendMessage(outgoing.getText());
  			}
  		}
 	}
 	
 	public class SendButtonListener implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
-			sendMessage();
+			sendMessage(outgoing.getText());
 		}
 
 	}
 	
 	public class IncomingReader implements Runnable {
 		public void run() {
-			String message;
-			
-			try {
-				while((message = reader.readLine()) != null) {
-					System.out.println("read: " + message);
-					incoming.append(message + "\n");
-				}
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
+			readMessage();
+			incoming.append(message.toString());
 		}
 	}
 	
-	public void sendMessage() {
-		// If field not empty do
-		if (outgoing.getText() != "") {
+	public void readMessage(){
+		try {
+			ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+			message =  (Message) ois.readObject();
+			System.out.println("received: " + message.toString());
+		} catch (IOException ioEx) {
+			ioEx.printStackTrace();
+		} catch (ClassNotFoundException cnfEx) {
+			cnfEx.printStackTrace();
+		}
+	}
+	
+	public void sendMessage(String sendThis) {
+		if (!sendThis.trim().equals("")) {
+			// Writes message to message objects and attaches data
+			message = new Message(sendThis);
+			
 			try {
-				writer.println(outgoing.getText());
-				writer.flush();
+				clientOut.writeObject(message);
+				clientOut.close();
+				byte[] bytes = baos.toByteArray();
+				sockOut.write(bytes);
+				System.out.println("Sent: " + message.toString());
 			} catch(Exception ex) {
 				ex.printStackTrace();
 			}

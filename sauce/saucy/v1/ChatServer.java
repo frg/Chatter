@@ -1,4 +1,4 @@
-package saucy;
+package saucy.v1;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -27,7 +27,7 @@ public class ChatServer {
 	
 	public void go() {
 		clientOutputStreams = new ArrayList();
-		
+		 
 		try {
 			ServerSocket serverSock = new ServerSocket(Values.port);
 			
